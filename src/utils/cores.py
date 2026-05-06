@@ -1,0 +1,9 @@
+PRIMARY = "#2c3e50"
+SECONDARY = "#34495e"
+ACCENT = "#1abc9c"
+SUCCESS = "#27ae60"
+DANGER = "#e74c3c"
+BG = "#ecf0f1"
+WHITE = "#ffffff"
+ERROR = "#ef4444"     # vermelho
+WARNING = "#f59e0b"   # amarelo
