@@ -5,9 +5,6 @@ from src.ui.splash import SplashScreen
 from src.ui.tela_principal import TelaPrincipal
 from src.ui.styles import aplicar_estilo
 
-# cria banco
-criar_tabelas()
-
 def centralizar_janela(root, largura=1200, altura=600):
 
     root.update_idletasks()  # 🔥 ESSENCIAL
@@ -30,14 +27,21 @@ def iniciar_sistema(root, splash, tema):
 
     TelaPrincipal(root, tema)
 
-root = tk.Tk()
 
-tema = aplicar_estilo(root)
+def main():
+    # cria banco
+    criar_tabelas()
 
-root.withdraw()
+    root = tk.Tk()
+    tema = aplicar_estilo(root)
 
-splash = SplashScreen(root)
+    root.withdraw()
 
-root.after(2500, lambda: iniciar_sistema(root, splash, tema))
+    splash = SplashScreen(root)
 
-root.mainloop()
+    root.after(2500, lambda: iniciar_sistema(root, splash, tema))
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
