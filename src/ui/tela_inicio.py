@@ -1,9 +1,7 @@
 import tkinter as tk
 
-from src.modules.vendas import faturamento_do_dia, faturamento_do_mes
+from src.modules.vendas import faturamento_do_dia, faturamento_do_mes, vendas_por_dia, vendas_mes_anterior_total, vendas_por_dia_mes_atual
 from src.modules.produtos import listar_produtos, valor_total_estoque
-from src.modules.vendas import faturamento_do_dia, vendas_por_dia, vendas_mes_anterior_total, vendas_por_dia_mes_atual
-from src.modules.produtos import valor_total_estoque
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
