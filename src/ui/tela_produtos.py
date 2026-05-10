@@ -6,6 +6,8 @@ from src.modules.db_config import obter_config
 from src.utils.cores import *
 from src.ui.styles import *
 from src.utils.botoes import botao_moderno, botao_menor
+from src.utils.formatacao import moeda
+
 
 class TelaProdutos(tk.Frame):
 
@@ -225,12 +227,14 @@ class TelaProdutos(tk.Frame):
             if estoque_minimo is None:
                 estoque_minimo = estoque_minimo_global
 
-            if estoque <= estoque_minimo:
+            alerta_ativo = obter_config("alerta_estoque", "1")
+
+            if alerta_ativo == "1" and estoque <= estoque_minimo:
 
                 self.tabela.insert(
                     "",
                     "end",
-                    values=(id_produto, codigo, nome, preco, estoque),
+                    values=(id_produto, codigo, nome, moeda(preco), estoque),
                     tags=("estoque_baixo",)
                 )
 
@@ -239,7 +243,7 @@ class TelaProdutos(tk.Frame):
                 self.tabela.insert(
                     "",
                     "end",
-                    values=(id_produto, codigo, nome, preco, estoque)
+                    values=(id_produto, codigo, nome, moeda(preco), estoque)
                 )
             
     def buscar_produto(self):
@@ -430,7 +434,7 @@ class TelaProdutos(tk.Frame):
 
             try:
 
-                atualizar_produto(id_produto, codigo, nome, preco, estoque)
+                atualizar_produto(id_produto, codigo, nome, moeda(preco), estoque)
 
                 messagebox.showinfo("Sucesso", "Produto atualizado!")
 

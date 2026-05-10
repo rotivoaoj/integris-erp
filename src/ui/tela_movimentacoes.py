@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 
+from src.modules.db_config import obter_config
 from src.modules.estoque import historico_movimentacoes, historico_movimentacoes_paginado
 from src.utils.cores import *
 from src.utils.botoes import botao_menor
+from src.utils.formatacao import moeda
 
 
 class TelaMovimentacoes(tk.Frame):
@@ -126,8 +128,19 @@ class TelaMovimentacoes(tk.Frame):
 
         for d in dados:
             tipo = d[2]
-            tag = "entrada" if tipo == "entrada" else "saida"
-            self.tabela.insert("", "end", values=d, tags=(tag,))
+            #tag = "entrada" if tipo == "entrada" else "saida"
+            alerta_entrada = obter_config("alerta_entrada", "1")
+
+            tags = ()
+
+            if alerta_entrada == "1":
+                tags = ("entrada",)
+            self.tabela.insert("", "end", values=d, tags=tags)
+            
+            alerta_saida = obter_config("alerta_saida", "1")
+            
+            if alerta_saida == "1" and tipo == "saida":
+                self.tabela.item(self.tabela.get_children()[-1], tags=("saida",))
             
         self.atualizar_label_pagina()
 
