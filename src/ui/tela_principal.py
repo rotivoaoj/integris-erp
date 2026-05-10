@@ -9,6 +9,7 @@ from src.ui.tela_configuracoes import TelaConfiguracoes
 #from src.ui.version import VERSAO
 
 from src.utils.cores import *
+from src.utils.formatacao import moeda
 
 
 from src.settings.config import VERSAO, AMBIENTE

@@ -5,6 +5,7 @@ from src.modules.vendas import buscar_produto_por_codigo, registrar_venda, fatur
 from src.utils.cores import *
 from src.utils.componentes import botao_padrao
 from src.utils.botoes import botao_moderno, botao_menor
+from src.utils.formatacao import moeda
 
 class TelaVendas(tk.Frame):
 
@@ -161,7 +162,7 @@ class TelaVendas(tk.Frame):
             "id": produto_id,
             "nome": nome,
             "quantidade": quantidade,
-            "preco": preco
+            "preco": preco  # Store raw numeric price
         })
 
         self.atualizar_tabela()
@@ -184,8 +185,8 @@ class TelaVendas(tk.Frame):
                 values=(
                     item["nome"],
                     item["quantidade"],
-                    item["preco"],
-                    subtotal
+                    moeda(item["preco"]),  # Format price for display
+                    moeda(subtotal)        # Format subtotal for display
             )
         )
     # =========================
@@ -233,10 +234,9 @@ class TelaVendas(tk.Frame):
         for item in self.carrinho:
             total += item["preco"] * item["quantidade"]
 
-        self.label_total.config(text=f"Total: R$ {total:.2f}")
+        self.label_total.config(text=f"Total: {moeda(total)}")
         
     def atualizar_resumo(self):
-        from src.modules.vendas import faturamento_do_dia
 
         faturamento = faturamento_do_dia()
 

@@ -9,6 +9,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from src.ui.tela_produtos import TelaProdutos
 
 from src.utils.cores import *
+from src.utils.formatacao import moeda
 
 
 class TelaInicio(tk.Frame):
