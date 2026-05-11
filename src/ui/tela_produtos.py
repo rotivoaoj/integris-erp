@@ -118,7 +118,7 @@ class TelaProdutos(tk.Frame):
         
         self.tabela.tag_configure(
             "estoque_baixo",
-            background="#ff4d4d",
+            background="#c45d67",
             foreground="white"
         )
         style.map(
@@ -142,7 +142,7 @@ class TelaProdutos(tk.Frame):
         self.tabela.pack(fill="both", expand=True)
         self.tabela.tag_configure(
             "estoque_baixo",
-            background="#7f1d1d",
+            background="#c45d67",
             foreground="white"
         )
 
