@@ -1,1 +1,1 @@
-VERSAO = "v1.0.0"
+VERSAO = "v1.0.1"

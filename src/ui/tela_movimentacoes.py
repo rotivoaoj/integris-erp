@@ -73,8 +73,8 @@ class TelaMovimentacoes(tk.Frame):
 
         self.tabela.pack(fill="both", expand=True)
         
-        self.tabela.tag_configure("entrada", background="#c8cfec")
-        self.tabela.tag_configure("saida", background="#f8d7da")
+        self.tabela.tag_configure("entrada", background="#92a3e6")
+        self.tabela.tag_configure("saida", background="#c45d67")
         
         # ==========================
         # PAGINAÇÃO
