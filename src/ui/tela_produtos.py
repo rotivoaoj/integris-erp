@@ -448,7 +448,7 @@ class TelaProdutos(tk.Frame):
         btn_salvar = botao_moderno(
             janela,
             "Salvar Alterações",
-            self.salvar,
+            salvar,
             "primary"
         )
 

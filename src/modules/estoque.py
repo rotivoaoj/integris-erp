@@ -1,4 +1,5 @@
 from src.database import database
+from src.utils.formatacao import data_hora_brasileira
 
 def entrada_estoque(produto_id, quantidade, motivo="Entrada manual"):
 
@@ -86,7 +87,13 @@ def historico_movimentacoes():
 
     conn.close()
 
-    return dados
+    formatted = []
+    for row in dados:
+        linha = list(row)
+        linha[5] = data_hora_brasileira(linha[5])
+        formatted.append(tuple(linha))
+
+    return formatted
 
 def historico_movimentacoes_paginado(limite, offset):
 
@@ -112,4 +119,10 @@ def historico_movimentacoes_paginado(limite, offset):
     dados = cursor.fetchall()
     conn.close()
 
-    return dados
+    formatted = []
+    for row in dados:
+        linha = list(row)
+        linha[5] = data_hora_brasileira(linha[5])
+        formatted.append(tuple(linha))
+
+    return formatted
