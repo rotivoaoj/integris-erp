@@ -61,7 +61,7 @@ class TelaVendas(tk.Frame):
 
         btn_add = botao_menor(
             frame_topo,
-            "Adicionar +",
+            "+ Adicionar",
             self.adicionar_produto,
             "default"
         )

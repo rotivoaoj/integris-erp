@@ -116,7 +116,7 @@ class TelaConfiguracoes(tk.Frame):
         )
         header.pack(pady=(15, 20), padx=20)
 
-        # Scrollable content area
+        # Conteudo da area scrollavel
         canvas = tk.Canvas(self, bg=BG, highlightthickness=0)
         scrollbar = tk.Scrollbar(self, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas, bg=BG)
@@ -129,7 +129,7 @@ class TelaConfiguracoes(tk.Frame):
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Mouse wheel scrolling
+        # Roda de scroll do mouse
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
@@ -152,15 +152,15 @@ class TelaConfiguracoes(tk.Frame):
         self.var_alerta_entrada.set(obter_config("alerta_entrada", "1") == "1")
         self.var_alerta_saida.set(obter_config("alerta_saida", "1") == "1")
 
-        # Alert 1
+        # Alerta 1
         self._create_toggle_item(
             alerts_frame,
             "Alerta visual de estoque baixo",
-            "Notifica quando o estoque fica abaixo do mínimo",
+            "Notifica quando o estoque fica igual/abaixo do mínimo",
             self.var_alerta_estoque
         )
 
-        # Alert 2
+        # Alerta 2
         self._create_toggle_item(
             alerts_frame,
             "Destacar entradas no histórico",
@@ -168,7 +168,7 @@ class TelaConfiguracoes(tk.Frame):
             self.var_alerta_entrada
         )
 
-        # Alert 3
+        # Alerta 3
         self._create_toggle_item(
             alerts_frame,
             "Destacar saídas/vendas no histórico",
@@ -251,7 +251,7 @@ class TelaConfiguracoes(tk.Frame):
         ).pack(side="left")
 
     def _create_section_header(self, parent, text):
-        """Create a section header with underline"""
+        """Cria uma seçao de header com underline"""
         header_frame = tk.Frame(parent, bg=BG)
         header_frame.pack(fill="x", pady=(15, 10))
 
@@ -267,7 +267,7 @@ class TelaConfiguracoes(tk.Frame):
         divider.pack(fill="x", pady=(5, 0))
 
     def _create_toggle_item(self, parent, title, description, var):
-        """Create a toggle item with title and description"""
+        """Cria um item toggle com titulo e descricao"""
         item_frame = tk.Frame(parent, bg=WHITE)
         item_frame.pack(fill="x", padx=15, pady=12)
 
@@ -299,7 +299,7 @@ class TelaConfiguracoes(tk.Frame):
         )
         toggle.pack(side="right", padx=(10, 0))
 
-        # Sync toggle with variable
+        # Sincroniza o toggle com uma variavel
         def update_var():
             var.set(toggle.get())
 
@@ -320,7 +320,7 @@ class TelaConfiguracoes(tk.Frame):
         messagebox.showinfo("Sucesso", "✓ Configurações salvas com sucesso!")
 
     def _cancelar(self):
-        """Cancel and return to the main screen"""
+        """Cancela e retorna pra tela principal"""
         parent = getattr(self.master, "master", None)
         if parent and hasattr(parent, "abrir_inicio"):
             parent.abrir_inicio()
