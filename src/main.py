@@ -7,7 +7,7 @@ from src.ui.styles import aplicar_estilo
 
 def centralizar_janela(root, largura=1200, altura=600):
 
-    root.update_idletasks()  # 🔥 ESSENCIAL
+    root.update_idletasks()
 
     screen_w = root.winfo_screenwidth()
     screen_h = root.winfo_screenheight()

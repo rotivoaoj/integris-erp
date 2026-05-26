@@ -126,3 +126,107 @@ def historico_movimentacoes_paginado(limite, offset):
         formatted.append(tuple(linha))
 
     return formatted
+
+
+def contar_movimentacoes():
+
+    from src.database.database import conectar
+
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM movimentacoes_estoque
+    """)
+
+    total = cursor.fetchone()[0]
+    conn.close()
+
+    return total
+
+
+def historico_movimentacoes_filtrado(filtro_produto, filtro_data, limite, offset):
+
+    from src.database.database import conectar
+
+    conn = conectar()
+    cursor = conn.cursor()
+
+    # Build the WHERE clause based on filters
+    where_conditions = []
+    params = []
+
+    if filtro_produto:
+        where_conditions.append("p.nome LIKE ?")
+        params.append(f"%{filtro_produto}%")
+
+    if filtro_data:
+        where_conditions.append("m.data LIKE ?")
+        params.append(f"%{filtro_data}%")
+
+    where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+
+    query = f"""
+        SELECT 
+            m.id,
+            p.nome,
+            m.tipo,
+            m.quantidade,
+            m.motivo,
+            m.data
+        FROM movimentacoes_estoque m
+        JOIN produtos p ON p.id = m.produto_id
+        WHERE {where_clause}
+        ORDER BY m.data DESC
+        LIMIT ? OFFSET ?
+    """
+
+    params.extend([limite, offset])
+    cursor.execute(query, params)
+
+    dados = cursor.fetchall()
+    conn.close()
+
+    formatted = []
+    for row in dados:
+        linha = list(row)
+        linha[5] = data_hora_brasileira(linha[5])
+        formatted.append(tuple(linha))
+
+    return formatted
+
+
+def contar_movimentacoes_filtrado(filtro_produto, filtro_data):
+
+    from src.database.database import conectar
+
+    conn = conectar()
+    cursor = conn.cursor()
+
+    # Build the WHERE clause based on filters
+    where_conditions = []
+    params = []
+
+    if filtro_produto:
+        where_conditions.append("p.nome LIKE ?")
+        params.append(f"%{filtro_produto}%")
+
+    if filtro_data:
+        where_conditions.append("m.data LIKE ?")
+        params.append(f"%{filtro_data}%")
+
+    where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+
+    query = f"""
+        SELECT COUNT(*)
+        FROM movimentacoes_estoque m
+        JOIN produtos p ON p.id = m.produto_id
+        WHERE {where_clause}
+    """
+
+    cursor.execute(query, params)
+
+    total = cursor.fetchone()[0]
+    conn.close()
+
+    return total

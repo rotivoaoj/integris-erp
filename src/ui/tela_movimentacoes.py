@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from src.modules.db_config import obter_config
-from src.modules.estoque import historico_movimentacoes, historico_movimentacoes_paginado
+from src.modules.estoque import historico_movimentacoes_paginado, contar_movimentacoes, historico_movimentacoes_filtrado, contar_movimentacoes_filtrado
 from src.utils.cores import *
 from src.utils.botoes import botao_menor
 from src.utils.formatacao import moeda
@@ -13,7 +13,6 @@ class TelaMovimentacoes(tk.Frame):
     def __init__(self, master, tema):
         super().__init__(master)
         self.tema = tema
-        
         
         style = ttk.Style()
         style.theme_use("default")
@@ -45,8 +44,51 @@ class TelaMovimentacoes(tk.Frame):
         titulo.pack(pady=10)
 
         # ==========================
-        # TABELA
+        # BARRA DE FILTRO
         # ==========================
+
+        frame_filtro = tk.Frame(self, bg=BG)
+        frame_filtro.pack(fill="x", padx=10, pady=10)
+
+        tk.Label(
+            frame_filtro,
+            text="Filtrar por Produto:",
+            font=("Arial", 10),
+            bg=BG
+        ).pack(side="left", padx=5)
+
+        self.entry_produto = tk.Entry(frame_filtro, width=20)
+        self.entry_produto.pack(side="left", padx=5)
+
+        tk.Label(
+            frame_filtro,
+            text="Data (dd/mm/aaaa):",
+            font=("Arial", 10),
+            bg=BG
+        ).pack(side="left", padx=5)
+
+        self.entry_data = tk.Entry(frame_filtro, width=15)
+        self.entry_data.pack(side="left", padx=5)
+
+        btn_filtrar = botao_menor(
+            frame_filtro,
+            "🔍 Filtrar",
+            self.aplicar_filtro,
+            "default"
+        )
+        btn_filtrar.pack(side="left", padx=5)
+
+        btn_limpar = botao_menor(
+            frame_filtro,
+            "✕ Limpar",
+            self.limpar_filtro,
+            "default"
+        )
+        btn_limpar.pack(side="left", padx=5)
+
+        self.filtro_produto = ""
+        self.filtro_data = ""
+        self.filtro_ativo = False
 
         frame_tabela = tk.Frame(self)
         frame_tabela.pack(fill="both", expand=True, padx=10, pady=10)
@@ -83,13 +125,13 @@ class TelaMovimentacoes(tk.Frame):
         frame_paginacao = tk.Frame(self)
         frame_paginacao.pack(pady=10)
 
-        btn_anterior = botao_menor(
+        self.btn_anterior = botao_menor(
             frame_paginacao,
             "Anterior",
             self.pagina_anterior,
             "default"
         )
-        btn_anterior.pack(side="left", padx=5)
+        self.btn_anterior.pack(side="left", padx=5)
         
         self.label_pagina = tk.Label(
             frame_paginacao,
@@ -98,17 +140,18 @@ class TelaMovimentacoes(tk.Frame):
         )
         self.label_pagina.pack(side="left", padx=10)
 
-        btn_proximo = botao_menor(
+        self.btn_proximo = botao_menor(
             frame_paginacao,
             "Próxima",
             self.proxima_pagina,
             "default"
         )
-        btn_proximo.pack(side="left", padx=5)
+        self.btn_proximo.pack(side="left", padx=5)
         
         
         self.pagina_atual = 0
         self.limite = 20
+        self.total_registros = 0
 
         # carregar dados
         self.carregar_movimentacoes()
@@ -124,11 +167,16 @@ class TelaMovimentacoes(tk.Frame):
 
         offset = self.pagina_atual * self.limite
 
-        dados = historico_movimentacoes_paginado(self.limite, offset)
+        # Se há filtro ativo, usar função de filtragem
+        if self.filtro_ativo:
+            self.total_registros = contar_movimentacoes_filtrado(self.filtro_produto, self.filtro_data)
+            dados = historico_movimentacoes_filtrado(self.filtro_produto, self.filtro_data, self.limite, offset)
+        else:
+            self.total_registros = contar_movimentacoes()
+            dados = historico_movimentacoes_paginado(self.limite, offset)
 
         for d in dados:
             tipo = d[2]
-            #tag = "entrada" if tipo == "entrada" else "saida"
             alerta_entrada = obter_config("alerta_entrada", "1")
 
             tags = ()
@@ -143,6 +191,7 @@ class TelaMovimentacoes(tk.Frame):
                 self.tabela.item(self.tabela.get_children()[-1], tags=("saida",))
             
         self.atualizar_label_pagina()
+        self.atualizar_botoes_paginacao()
 
     def criar_header(self, titulo_texto):
 
@@ -158,8 +207,10 @@ class TelaMovimentacoes(tk.Frame):
         titulo.pack(side="left", padx=10, pady=10)
         
     def proxima_pagina(self):
-        self.pagina_atual += 1
-        self.carregar_movimentacoes()
+        total_paginas = (self.total_registros + self.limite - 1) // self.limite
+        if self.pagina_atual < total_paginas - 1:
+            self.pagina_atual += 1
+            self.carregar_movimentacoes()
 
     def pagina_anterior(self):
         if self.pagina_atual > 0:
@@ -167,4 +218,36 @@ class TelaMovimentacoes(tk.Frame):
             self.carregar_movimentacoes()
             
     def atualizar_label_pagina(self):
-        self.label_pagina.config(text=f"Página {self.pagina_atual + 1}")
+        total_paginas = (self.total_registros + self.limite - 1) // self.limite
+        self.label_pagina.config(text=f"Página {self.pagina_atual + 1} de {total_paginas}")
+        
+    def atualizar_botoes_paginacao(self):
+        total_paginas = (self.total_registros + self.limite - 1) // self.limite
+        
+        # Desabilitar botão anterior se estiver na primeira página
+        if self.pagina_atual == 0:
+            self.btn_anterior.config(state="disabled")
+        else:
+            self.btn_anterior.config(state="normal")
+        
+        # Desabilitar botão próximo se estiver na última página
+        if self.pagina_atual >= total_paginas - 1:
+            self.btn_proximo.config(state="disabled")
+        else:
+            self.btn_proximo.config(state="normal")
+
+    def aplicar_filtro(self):
+        self.filtro_produto = self.entry_produto.get().strip()
+        self.filtro_data = self.entry_data.get().strip()
+        self.filtro_ativo = bool(self.filtro_produto or self.filtro_data)
+        self.pagina_atual = 0
+        self.carregar_movimentacoes()
+
+    def limpar_filtro(self):
+        self.entry_produto.delete(0, "end")
+        self.entry_data.delete(0, "end")
+        self.filtro_produto = ""
+        self.filtro_data = ""
+        self.filtro_ativo = False
+        self.pagina_atual = 0
+        self.carregar_movimentacoes()
