@@ -1,13 +1,27 @@
 import tkinter as tk
+
 from tkinter import ttk, messagebox, simpledialog
+from tkinter import filedialog
+from wsgiref import headers
+
+from openpyxl import styles
+
 from src.modules.produtos import listar_produtos, inserir_produto, atualizar_produto, excluir_produto, salvar_produto
 from src.modules.estoque import entrada_estoque, saida_estoque
 from src.modules.db_config import obter_config
+from src.ui import styles
 from src.utils.cores import *
 from src.ui.styles import *
 from src.utils.botoes import botao_moderno, botao_menor
 from src.utils.formatacao import moeda
 
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, PatternFill
+
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
 
 class TelaProdutos(tk.Frame):
 
@@ -197,7 +211,12 @@ class TelaProdutos(tk.Frame):
 
         btn_excluir = botao_moderno(frame_acoes, "Excluir", self.excluir_produto, "danger")
         btn_excluir.pack(fill="x", pady=5)
-
+        
+        btn_exportar = botao_menor(frame_detalhes, "📥 Exportar Excel", self.exportar_excel, "default")
+        btn_exportar.pack(fill="x", pady=5)
+        
+        btn_exportar_pdf = botao_menor(frame_detalhes, "📄 Exportar PDF", self.exportar_pdf, "default")
+        btn_exportar_pdf.pack(fill="x", pady=5)
 
         # CARREGA PRODUTOS
         self.carregar_produtos()
@@ -546,12 +565,204 @@ class TelaProdutos(tk.Frame):
 
             self.carregar_produtos()
     
+    def saida_estoque(self):
+
+        selecionado = self.tabela.selection()
+
+        if not selecionado:
+            return
+
+        item = selecionado[0]
+        dados = self.tabela.item(item)["values"]
+        produto_id = dados[0]
+
+        quantidade = simpledialog.askinteger(
+            "Saída de Estoque",
+            "Quantidade a retirar:"
+        )
+
+        if quantidade:
+
+            saida_estoque(produto_id, quantidade)
+
+            messagebox.showinfo("Sucesso", "Saída registrada")
+
+            self.carregar_produtos()
+    
         try:
             saida_estoque(produto_id, quantidade)
             messagebox.showinfo("Sucesso", "Saída registrada!")
 
         except Exception as e:
             messagebox.showerror("Erro", str(e))
+            
+    def exportar_excel(self):
+
+        caminho = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            filetypes=[("Arquivo Excel", "*.xlsx")],
+            title="Salvar planilha"
+        )
+
+        if not caminho:
+            return
+
+        wb = Workbook()
+        ws = wb.active
+
+        ws.title = "Produtos"
+
+        # CABEÇALHO
+        ws["A1"] = "INTEGRIS ERP"
+        ws["A2"] = "Relatório de Produtos"
+
+        from datetime import datetime
+
+        ws["A4"] = f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+
+        # TÍTULOS
+        headers = ["Código", "Produto", "Estoque", "Preço"]
+
+        linha_header = 6
+
+        for col, header in enumerate(headers, start=1):
+
+            cell = ws.cell(row=linha_header, column=col)
+            cell.value = header
+
+            cell.font = Font(bold=True, color="FFFFFF")
+
+            cell.fill = PatternFill(
+                start_color="1F4E78",
+                end_color="1F4E78",
+                fill_type="solid"
+            )
+
+        # DADOS
+        linha = 7
+
+        for item in self.tabela.get_children():
+
+            valores = self.tabela.item(item)["values"]
+
+            ws.cell(linha, 1, valores[1])  # Código
+            ws.cell(linha, 2, valores[2])  # Produto
+            ws.cell(linha, 3, valores[4])  # Estoque
+            ws.cell(linha, 4, valores[3])  # Preço (Un.)
+
+            linha += 1
+
+        total_produtos = len(self.tabela.get_children())
+
+        ws.cell(linha + 2, 1, f"Total de produtos: {total_produtos}")
+
+        # LARGURA COLUNAS
+        ws.column_dimensions["A"].width = 15
+        ws.column_dimensions["B"].width = 40
+        ws.column_dimensions["C"].width = 15
+        ws.column_dimensions["D"].width = 15
+
+        wb.save(caminho)
+
+        messagebox.showinfo(
+            "Exportação",
+            "Planilha exportada com sucesso!"
+        )
+        
+    def exportar_pdf(self):
+
+        caminho = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("Arquivo PDF", "*.pdf")],
+            title="Salvar PDF"
+        )
+
+        if not caminho:
+            return
+
+        documento = SimpleDocTemplate(
+            caminho,
+            pagesize=A4
+        )
+
+        elementos = []
+
+        styles = getSampleStyleSheet()
+
+        from datetime import datetime
+
+        # CABEÇALHO
+        titulo = Paragraph(
+            "<b>INTEGRIS ERP</b><br/>Relatório de Produtos",
+            styles["Title"]
+        )
+
+        elementos.append(titulo)
+
+        elementos.append(Spacer(1, 20))
+
+        data = Paragraph(
+            f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}",
+            styles["Normal"]
+        )
+
+        elementos.append(data)
+
+        elementos.append(Spacer(1, 20))
+
+        # TABELA
+        dados = [
+            ["Código", "Produto", "Estoque", "Preço (Un.)"]
+        ]
+
+        for item in self.tabela.get_children():
+
+            valores = self.tabela.item(item)["values"]
+
+            dados.append([
+                valores[1],
+                valores[2],
+                valores[4],
+                valores[3]
+            ])
+
+        tabela = Table(dados)
+
+        tabela.setStyle(TableStyle([
+
+            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#1F4E78")),
+
+            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+
+            ("GRID", (0,0), (-1,-1), 1, colors.black),
+
+            ("BACKGROUND", (0,1), (-1,-1), colors.beige),
+
+            ("BOTTOMPADDING", (0,0), (-1,0), 10),
+
+        ]))
+
+        elementos.append(tabela)
+
+        elementos.append(Spacer(1, 20))
+
+        total_produtos = len(self.tabela.get_children())
+
+        total = Paragraph(
+            f"<b>Total de produtos:</b> {total_produtos}",
+            styles["Normal"]
+        )
+
+        elementos.append(total)
+
+        documento.build(elementos)
+
+        messagebox.showinfo(
+            "PDF",
+            "PDF exportado com sucesso!"
+        )
             
     def criar_header(self, titulo_texto):
 
