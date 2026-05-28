@@ -145,7 +145,7 @@ def contar_movimentacoes():
     return total
 
 
-def historico_movimentacoes_filtrado(filtro_produto, filtro_data, limite, offset):
+def historico_movimentacoes_filtrado(filtro_produto, filtro_data, filtro_tipo, limite, offset):
 
     from src.database.database import conectar
 
@@ -156,14 +156,31 @@ def historico_movimentacoes_filtrado(filtro_produto, filtro_data, limite, offset
     where_conditions = []
     params = []
 
+    # FILTRO PRODUTO
     if filtro_produto:
-        where_conditions.append("p.nome LIKE ?")
-        params.append(f"%{filtro_produto}%")
+        where_conditions.append("p.nome = ?")
+        params.append(filtro_produto)
 
+    # FILTRO DATA
     if filtro_data:
-        where_conditions.append("m.data LIKE ?")
-        params.append(f"%{filtro_data}%")
+        from datetime import datetime
 
+        try:
+            data_formatada = datetime.strptime(
+                filtro_data,
+                "%d/%m/%Y"
+            ).strftime("%Y-%m-%d")
+
+            where_conditions.append("DATE(m.data) = ?")
+            params.append(data_formatada)
+
+        except:
+            pass
+        
+    if filtro_tipo:
+        where_conditions.append("m.tipo = ?")
+        params.append(filtro_tipo)
+        
     where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
 
     query = f"""
@@ -196,7 +213,7 @@ def historico_movimentacoes_filtrado(filtro_produto, filtro_data, limite, offset
     return formatted
 
 
-def contar_movimentacoes_filtrado(filtro_produto, filtro_data):
+def contar_movimentacoes_filtrado(filtro_produto, filtro_data, filtro_tipo):
 
     from src.database.database import conectar
 
@@ -207,14 +224,31 @@ def contar_movimentacoes_filtrado(filtro_produto, filtro_data):
     where_conditions = []
     params = []
 
+    # FILTRO PRODUTO
     if filtro_produto:
-        where_conditions.append("p.nome LIKE ?")
-        params.append(f"%{filtro_produto}%")
+        where_conditions.append("p.nome = ?")
+        params.append(filtro_produto)
 
+    # FILTRO DATA
     if filtro_data:
-        where_conditions.append("m.data LIKE ?")
-        params.append(f"%{filtro_data}%")
+        from datetime import datetime
 
+        try:
+            data_formatada = datetime.strptime(
+                filtro_data,
+               "%d/%m/%Y"
+            ).strftime("%Y-%m-%d")
+
+            where_conditions.append("DATE(m.data) = ?")
+            params.append(data_formatada)
+
+        except:
+            pass
+
+    if filtro_tipo:
+        where_conditions.append("m.tipo = ?")
+        params.append(filtro_tipo)
+        
     where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
 
     query = f"""

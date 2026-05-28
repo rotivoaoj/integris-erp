@@ -5,8 +5,6 @@ from src.modules.db_config import obter_config
 from src.modules.estoque import historico_movimentacoes_paginado, contar_movimentacoes, historico_movimentacoes_filtrado, contar_movimentacoes_filtrado
 from src.utils.cores import *
 from src.utils.botoes import botao_menor
-from src.utils.formatacao import moeda
-
 
 class TelaMovimentacoes(tk.Frame):
 
@@ -69,6 +67,23 @@ class TelaMovimentacoes(tk.Frame):
 
         self.entry_data = tk.Entry(frame_filtro, width=15)
         self.entry_data.pack(side="left", padx=5)
+        
+        tk.Label(
+            frame_filtro,
+            text="Tipo:",
+            font=("Arial", 10),
+            bg=BG
+        ).pack(side="left", padx=5)
+
+        self.combo_tipo = ttk.Combobox(
+            frame_filtro,
+            values=["", "entrada", "saida"],
+            width=15,
+            state="readonly"
+        )
+
+        self.combo_tipo.pack(side="left", padx=5)
+        self.combo_tipo.current(0)
 
         btn_filtrar = botao_menor(
             frame_filtro,
@@ -88,6 +103,7 @@ class TelaMovimentacoes(tk.Frame):
 
         self.filtro_produto = ""
         self.filtro_data = ""
+        self.filtro_tipo = ""
         self.filtro_ativo = False
 
         frame_tabela = tk.Frame(self)
@@ -169,8 +185,8 @@ class TelaMovimentacoes(tk.Frame):
 
         # Se há filtro ativo, usar função de filtragem
         if self.filtro_ativo:
-            self.total_registros = contar_movimentacoes_filtrado(self.filtro_produto, self.filtro_data)
-            dados = historico_movimentacoes_filtrado(self.filtro_produto, self.filtro_data, self.limite, offset)
+            self.total_registros = contar_movimentacoes_filtrado(self.filtro_produto, self.filtro_data, self.filtro_tipo)
+            dados = historico_movimentacoes_filtrado(self.filtro_produto, self.filtro_data, self.filtro_tipo, self.limite, offset)
         else:
             self.total_registros = contar_movimentacoes()
             dados = historico_movimentacoes_paginado(self.limite, offset)
@@ -237,17 +253,33 @@ class TelaMovimentacoes(tk.Frame):
             self.btn_proximo.config(state="normal")
 
     def aplicar_filtro(self):
+
         self.filtro_produto = self.entry_produto.get().strip()
         self.filtro_data = self.entry_data.get().strip()
-        self.filtro_ativo = bool(self.filtro_produto or self.filtro_data)
+        self.filtro_tipo = self.combo_tipo.get().strip()
+
+        self.filtro_ativo = bool(
+            self.filtro_produto or
+            self.filtro_data or
+            self.filtro_tipo
+        )
+
         self.pagina_atual = 0
+
         self.carregar_movimentacoes()
 
     def limpar_filtro(self):
+
         self.entry_produto.delete(0, "end")
         self.entry_data.delete(0, "end")
+
+        self.combo_tipo.current(0)
+
         self.filtro_produto = ""
         self.filtro_data = ""
+        self.filtro_tipo = ""
+
         self.filtro_ativo = False
         self.pagina_atual = 0
+
         self.carregar_movimentacoes()
