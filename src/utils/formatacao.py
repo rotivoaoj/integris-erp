@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 def moeda(valor):
     return f"R$ {float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-
 def data_hora_brasileira(valor):
 
     if valor is None:
@@ -44,6 +43,9 @@ def data_hora_brasileira(valor):
 
     return valor
 
-def data_brasileira(valor):
-    formatted = data_hora_brasileira(valor)
-    return formatted.split(" ")[0] if formatted else formatted
+# def data_brasileira(valor):
+#    formatted = data_hora_brasileira(valor)
+#    return formatted.split(" ")[0] if formatted else formatted
+
+def agora_brasil():
+    return datetime.utcnow() - timedelta(hours=3)

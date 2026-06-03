@@ -121,6 +121,15 @@ class TelaVendas(tk.Frame):
 
         btn_remover.pack(pady=5)
         
+        btn_relatorio = botao_moderno(
+            self,
+            "📄 Relatório do Dia",
+            self.exportar_relatorio_dia,
+            "default"
+        )
+
+        btn_relatorio.pack(pady=5)
+        
         total_hoje = faturamento_do_dia()
         self.label_faturamento.config(text=f"Faturamento hoje: R$ {total_hoje:.2f}")
 
