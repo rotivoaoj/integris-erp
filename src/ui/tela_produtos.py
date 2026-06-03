@@ -13,7 +13,7 @@ from src.ui import styles
 from src.utils.cores import *
 from src.ui.styles import *
 from src.utils.botoes import botao_moderno, botao_menor
-from src.utils.formatacao import moeda
+from src.utils.formatacao import agora_brasil, moeda
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, PatternFill
@@ -162,6 +162,37 @@ class TelaProdutos(tk.Frame):
 
         self.tabela.bind("<<TreeviewSelect>>", self.mostrar_detalhes)
 
+        self.pagina_atual = 0
+        self.limite = 20
+        self.total_registros = 0
+        self.filtro_busca = ""
+
+        frame_paginacao = tk.Frame(frame_lista)
+        frame_paginacao.pack(fill="x", pady=(5, 0))
+
+        self.btn_anterior = botao_menor(
+            frame_paginacao,
+            "Anterior",
+            self.pagina_anterior,
+            "default"
+        )
+        self.btn_anterior.pack(side="left", padx=5)
+
+        self.label_pagina = tk.Label(
+            frame_paginacao,
+            text="Página 1 de 1",
+            font=("Arial", 10, "bold")
+        )
+        self.label_pagina.pack(side="left", padx=10)
+
+        self.btn_proximo = botao_menor(
+            frame_paginacao,
+            "Próxima",
+            self.proxima_pagina,
+            "default"
+        )
+        self.btn_proximo.pack(side="left", padx=5)
+
         # ==========================
         # DETALHES
         # ==========================
@@ -231,7 +262,20 @@ class TelaProdutos(tk.Frame):
 
         produtos = listar_produtos()
 
-        for p in produtos:
+        if self.filtro_busca:
+            termo = self.filtro_busca.lower()
+            produtos = [
+                p for p in produtos
+                if termo in (p[2] or "").lower() or termo in (p[1] or "").lower()
+            ]
+
+        self.total_registros = len(produtos)
+
+        inicio = self.pagina_atual * self.limite
+        fim = inicio + self.limite
+        pagina_atual = produtos[inicio:fim]
+
+        for p in pagina_atual:
 
             id_produto = p[0]
             codigo = p[1]
@@ -264,19 +308,43 @@ class TelaProdutos(tk.Frame):
                     "end",
                     values=(id_produto, codigo, nome, moeda(preco), estoque)
                 )
+
+        self.atualizar_label_pagina()
+        self.atualizar_botoes_paginacao()
             
     def buscar_produto(self):
 
-        termo = self.entry_busca.get().lower()
+        self.filtro_busca = self.entry_busca.get().strip()
+        self.pagina_atual = 0
+        self.carregar_produtos()
 
-        for item in self.tabela.get_children(): 
-            self.tabela.delete(item)
+    def proxima_pagina(self):
+        total_paginas = max(1, (self.total_registros + self.limite - 1) // self.limite)
+        if self.pagina_atual < total_paginas - 1:
+            self.pagina_atual += 1
+            self.carregar_produtos()
 
-        produtos = listar_produtos()
+    def pagina_anterior(self):
+        if self.pagina_atual > 0:
+            self.pagina_atual -= 1
+            self.carregar_produtos()
 
-        for p in produtos:
-            if termo in p[2].lower():
-                self.tabela.insert("", "end", values=p)
+    def atualizar_label_pagina(self):
+        total_paginas = max(1, (self.total_registros + self.limite - 1) // self.limite)
+        self.label_pagina.config(text=f"Página {self.pagina_atual + 1} de {total_paginas}")
+
+    def atualizar_botoes_paginacao(self):
+        total_paginas = max(1, (self.total_registros + self.limite - 1) // self.limite)
+
+        if self.pagina_atual == 0:
+            self.btn_anterior.config(state="disabled")
+        else:
+            self.btn_anterior.config(state="normal")
+
+        if self.pagina_atual >= total_paginas - 1:
+            self.btn_proximo.config(state="disabled")
+        else:
+            self.btn_proximo.config(state="normal")
 
     def mostrar_detalhes(self, event):
 
@@ -616,9 +684,7 @@ class TelaProdutos(tk.Frame):
         ws["A1"] = "INTEGRIS ERP"
         ws["A2"] = "Relatório de Produtos"
 
-        from datetime import datetime
-
-        ws["A4"] = f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+        ws["A4"] = f"Gerado em: {agora_brasil().strftime('%d/%m/%Y %H:%M:%S')}"
 
         # TÍTULOS
         headers = ["Código", "Produto", "Estoque", "Preço"]
@@ -689,8 +755,6 @@ class TelaProdutos(tk.Frame):
 
         styles = getSampleStyleSheet()
 
-        from datetime import datetime
-
         # CABEÇALHO
         titulo = Paragraph(
             "<b>INTEGRIS ERP</b><br/>Relatório de Produtos",
@@ -702,7 +766,7 @@ class TelaProdutos(tk.Frame):
         elementos.append(Spacer(1, 20))
 
         data = Paragraph(
-            f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}",
+            f"Gerado em: {agora_brasil().strftime('%d/%m/%Y %H:%M:%S')}",
             styles["Normal"]
         )
 

@@ -171,7 +171,8 @@ def historico_movimentacoes_filtrado(filtro_produto, filtro_data, filtro_tipo, l
                 "%d/%m/%Y"
             ).strftime("%Y-%m-%d")
 
-            where_conditions.append("DATE(m.data) = ?")
+            # Ajusta para fuso horário Brasil (-3 horas)
+            where_conditions.append("DATE(datetime(m.data, '-3 hours')) = ?")
             params.append(data_formatada)
 
         except:
@@ -239,7 +240,8 @@ def contar_movimentacoes_filtrado(filtro_produto, filtro_data, filtro_tipo):
                "%d/%m/%Y"
             ).strftime("%Y-%m-%d")
 
-            where_conditions.append("DATE(m.data) = ?")
+            # Ajusta para fuso horário Brasil (-3 horas)
+            where_conditions.append("DATE(datetime(m.data, '-3 hours')) = ?")
             params.append(data_formatada)
 
         except:
