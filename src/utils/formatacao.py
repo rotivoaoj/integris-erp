@@ -2,6 +2,15 @@ from datetime import datetime, timedelta
 
 
 def moeda(valor):
+    if valor is None or valor == "":
+        return "R$ 0,00"
+
+    if isinstance(valor, str):
+        valor = valor.strip()
+        if valor.startswith("R$"):
+            valor = valor[2:].strip()
+        valor = valor.replace(".", "").replace(",", ".")
+
     return f"R$ {float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 def data_hora_brasileira(valor):

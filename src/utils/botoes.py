@@ -29,7 +29,7 @@ CORES = {
 # =========================
 # BOTÃO MODERNO
 # =========================
-def botao_moderno(master, texto, comando, tipo="primary", largura=12):
+def botao_moderno(master, texto, comando, tipo="primary", largura=15):
 
     cor = CORES.get(tipo, CORES["primary"])
     cor_hover = CORES.get(f"{tipo}_hover", cor)

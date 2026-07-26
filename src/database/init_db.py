@@ -30,6 +30,19 @@ def criar_tabelas():
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS itens_venda (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        venda_id INTEGER,
+        produto_id INTEGER,
+        nome TEXT,
+        quantidade INTEGER,
+        preco_unit REAL,
+        subtotal REAL,
+        FOREIGN KEY (venda_id) REFERENCES vendas(id)
+    )
+    """)
+
     # =========================
     # CONFIGURAÇÕES
     # =========================

@@ -70,6 +70,7 @@ class TelaPrincipal(tk.Frame):
         self.criar_botao_menu("💰 Vendas", self.abrir_vendas)
         self.criar_botao_menu("📊 Relatórios", self.abrir_movimentacoes)
         self.criar_botao_menu("⚙️ Configurações", self.abrir_configuracoes)
+        self.criar_botao_menu("❓ Ajuda", self.abrir_ajuda)
         
         self.ativar_botao(self.botoes_menu[0], self.abrir_inicio)
         
@@ -177,6 +178,119 @@ class TelaPrincipal(tk.Frame):
         self.limpar_tela()
         tela = TelaVendas(self.frame_principal, self.tema)
         tela.pack(fill="both", expand=True)
+
+    def abrir_ajuda(self):
+        self.limpar_tela()
+
+        frame_ajuda = tk.Frame(self.frame_principal, bg=self.tema["card"])
+        frame_ajuda.pack(fill="both", expand=True)
+
+        titulo = tk.Label(
+            frame_ajuda,
+            text="Ajuda",
+            font=("Arial", 22, "bold"),
+            fg=PRIMARY,
+            bg=self.tema["card"]
+        )
+        titulo.pack(anchor="w", padx=20, pady=(20, 5))
+
+        subtitulo = tk.Label(
+            frame_ajuda,
+            text="Dicas para usar o sistema de forma simples e eficiente.",
+            font=("Arial", 12),
+            fg=PRIMARY,
+            bg=self.tema["card"]
+        )
+        subtitulo.pack(anchor="w", padx=20, pady=(0, 20))
+
+        canvas = tk.Canvas(frame_ajuda, bg=self.tema["card"], highlightthickness=0)
+        scrollbar = tk.Scrollbar(frame_ajuda, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg=self.tema["card"])
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        canvas.pack(side="left", fill="both", expand=True, padx=(20, 0), pady=(0, 20))
+        scrollbar.pack(side="right", fill="y", padx=(0, 20), pady=(0, 20))
+
+        section_frame = tk.Frame(scrollable_frame, bg=self.tema["card"], bd=0)
+        section_frame.pack(fill="x", padx=10, pady=(0, 20))
+
+        header_frame = tk.Frame(section_frame, bg=self.tema["card"])
+        header_frame.pack(fill="x", pady=(10, 10), padx=10)
+
+        tk.Label(
+            header_frame,
+            text="🔎 DICAS RÁPIDAS",
+            font=("Arial", 12, "bold"),
+            bg=self.tema["card"],
+            fg=PRIMARY
+        ).pack(anchor="w")
+
+        tk.Frame(header_frame, bg=self.tema["primary"], height=2).pack(fill="x", pady=(5, 0))
+
+        dicas = [
+            "1. Use 'Produtos' para cadastrar e editar mercadorias.",
+            "2. Em 'Vendas', registre vendas rapidamente e veja o total.",
+            "3. Verifique 'Relatórios' para acompanhar movimentações.",
+            "4. Ajuste preferências em 'Configurações'.",
+            "5. Use o campo de busca em 'Produtos' para encontrar itens rapidamente.",
+            "6. Ao cadastrar um produto, preencha todos os campos obrigatórios para evitar erros.",
+            "7. Em 'Vendas', selecione o produto e a quantidade correta antes de finalizar a venda.",
+            "8. Em 'Relatórios', filtre por datas para visualizar vendas e movimentações específicas.",
+            "9. Em 'Configurações', personalize o tema e outras preferências do sistema.",
+            "10. Para suporte, entre em contato com o SAC através do telefone ou email fornecido na seção de ajuda.",
+            "11. Utilize a função de exportação de relatórios para salvar dados importantes em formatos como CSV ou PDF.",
+            "12. Use . para estabelecer valores decimais."
+        ]
+
+        for dica in dicas:
+            label = tk.Label(
+                section_frame,
+                text=dica,
+                font=("Arial", 11),
+                fg=self.tema["text"],
+                bg=self.tema["card"],
+                justify="left",
+                wraplength=820
+            )
+            label.pack(anchor="w", padx=20, pady=6)
+
+        contato_section = tk.Frame(scrollable_frame, bg=self.tema["card"], bd=0)
+        contato_section.pack(fill="x", padx=10, pady=(0, 20))
+
+        contato_header = tk.Frame(contato_section, bg=self.tema["card"])
+        contato_header.pack(fill="x", pady=(10, 10), padx=10)
+
+        tk.Label(
+            contato_header,
+            text="📞 Suporte ao Cliente (SAC)",
+            font=("Arial", 12, "bold"),
+            bg=self.tema["card"],
+            fg=PRIMARY
+        ).pack(anchor="w")
+
+        tk.Frame(contato_header, bg=self.tema["primary"], height=2).pack(fill="x", pady=(5, 0))
+
+        contato = tk.Label(
+            contato_section,
+            text="Telefone: (11) 4000-1234\nEmail: sac@integris.com.br",
+            font=("Arial", 11),
+            fg=self.tema["text"],
+            bg=self.tema["card"],
+            justify="left"
+        )
+        contato.pack(anchor="w", padx=20, pady=(8, 20))
 
     def abrir_configuracoes(self):
         self.limpar_tela()

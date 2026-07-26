@@ -1,11 +1,24 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
+
+from datetime import datetime
 
 from src.modules.vendas import buscar_produto_por_codigo, registrar_venda, faturamento_do_dia
 from src.utils.cores import *
 from src.utils.componentes import botao_padrao
 from src.utils.botoes import botao_moderno, botao_menor
-from src.utils.formatacao import moeda
+from src.utils.formatacao import moeda, data_hora_brasileira
+
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
+from src.utils.formatacao import data_hora_brasileira
+
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
 
 class TelaVendas(tk.Frame):
 
@@ -123,7 +136,7 @@ class TelaVendas(tk.Frame):
         
         btn_relatorio = botao_moderno(
             self,
-            "📄 Relatório do Dia",
+            "📄 Relatório de Hoje",
             self.exportar_relatorio_dia,
             "default"
         )
@@ -263,3 +276,109 @@ class TelaVendas(tk.Frame):
             bg="white"
         )
         titulo.pack(side="left", padx=10, pady=10)
+
+    def exportar_relatorio_dia(self):
+
+        # Pega vendas do dia
+        try:
+            from src.modules.vendas import listar_vendas_do_dia
+        except Exception:
+            messagebox.showerror("Erro", "Não foi possível carregar dados de vendas")
+            return
+
+        vendas = listar_vendas_do_dia()
+
+        if not vendas:
+            messagebox.showinfo("Relatório", "Nenhuma venda encontrada para hoje")
+            return
+
+        # Pergunta onde salvar
+        caminho = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("PDF files", "*.pdf")],
+            title="Salvar Relatório do Dia"
+        )
+
+        if not caminho:
+            return
+
+        # Monta documento
+        styles = getSampleStyleSheet()
+        doc = SimpleDocTemplate(caminho, pagesize=A4)
+
+        elementos = []
+
+        titulo = Paragraph("<b>INTEGRIS ERP</b><br/>Relatório de Vendas - Hoje", 
+                           styles["Title"])
+        elementos.append(titulo)
+        elementos.append(Spacer(1, 12))
+
+        elementos.append(Paragraph(
+            f"Gerado em: {data_hora_brasileira(datetime.utcnow()).replace(' 00:00:00', '')}",
+            styles["Normal"]
+        ))
+        elementos.append(Spacer(1, 12))
+
+        total_geral = 0
+        venda_atual = None
+        venda_total_atual = 0
+        dados_tabela = []
+
+        for venda_id, venda_total, venda_data, produto_id, nome, quantidade, preco_unit, subtotal in vendas:
+            if venda_id != venda_atual:
+                if venda_atual is not None and len(dados_tabela) > 1:
+                    t = Table(dados_tabela, colWidths=[220, 60, 80, 80])
+                    t.setStyle(TableStyle([
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                        ("ALIGN", (1, 1), (3, -1), "RIGHT")
+                    ]))
+                    elementos.append(t)
+                    elementos.append(Spacer(1, 6))
+                    elementos.append(Paragraph(
+                        f"Total da venda: R$ {venda_total_atual:.2f}",
+                        styles["Normal"]
+                    ))
+                    elementos.append(Spacer(1, 12))
+
+                venda_atual = venda_id
+                venda_total_atual = venda_total or 0
+                total_geral += venda_total_atual
+
+                elementos.append(Paragraph(
+                    f"<b>Venda #{venda_id}</b> - {data_hora_brasileira(venda_data)}",
+                    styles["Heading3"]
+                ))
+                elementos.append(Spacer(1, 6))
+
+                dados_tabela = [["Produto", "Qtd", "Preço", "Subtotal"]]
+
+            dados_tabela.append([
+                nome,
+                str(quantidade),
+                moeda(preco_unit),
+                moeda(subtotal)
+            ])
+
+        if venda_atual is not None and len(dados_tabela) > 1:
+            t = Table(dados_tabela, colWidths=[220, 60, 80, 80])
+            t.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                ("ALIGN", (1, 1), (3, -1), "RIGHT")
+            ]))
+            elementos.append(t)
+            elementos.append(Spacer(1, 6))
+            elementos.append(Paragraph(
+                f"Total da venda: R$ {venda_total_atual:.2f}",
+                styles["Normal"]
+            ))
+            elementos.append(Spacer(1, 12))
+
+        elementos.append(Paragraph(f"<b>Total do dia:</b> R$ {total_geral:.2f}", styles["Normal"]))
+
+        try:
+            doc.build(elementos)
+            messagebox.showinfo("Sucesso", f"Relatório salvo em:\n{caminho}")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Falha ao gerar PDF: {e}")

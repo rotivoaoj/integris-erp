@@ -1,6 +1,6 @@
 import os
 
-VERSAO = "v1.0.1"
+VERSAO = "v1.0.2"
 
 # pega do sistema ou usa DEV como padrão
 AMBIENTE = "DEV"
