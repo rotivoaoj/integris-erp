@@ -346,6 +346,18 @@ class TelaProdutos(tk.Frame):
         else:
             self.btn_proximo.config(state="normal")
 
+    def obter_produtos_filtrados(self):
+        produtos = listar_produtos()
+
+        if self.filtro_busca:
+            termo = self.filtro_busca.lower()
+            produtos = [
+                p for p in produtos
+                if termo in (p[2] or "").lower() or termo in (p[1] or "").lower()
+            ]
+
+        return produtos
+
     def mostrar_detalhes(self, event):
 
         selecionado = self.tabela.selection()
@@ -513,7 +525,10 @@ class TelaProdutos(tk.Frame):
                 return
 
             try:
-                preco = float(preco)
+                preco = preco.strip()
+                if preco.startswith("R$"):
+                    preco = preco[2:].strip()
+                preco = float(preco.replace(".", "").replace(",", "."))
                 estoque = int(estoque)
             except ValueError:
                 messagebox.showerror("Erro", "Preço inválido ou estoque inválido.")
@@ -521,7 +536,7 @@ class TelaProdutos(tk.Frame):
 
             try:
 
-                atualizar_produto(id_produto, codigo, nome, moeda(preco), estoque)
+                atualizar_produto(id_produto, codigo, nome, preco, estoque)
 
                 messagebox.showinfo("Sucesso", "Produto atualizado!")
 
@@ -626,43 +641,12 @@ class TelaProdutos(tk.Frame):
         )
 
         if quantidade:
-
-            saida_estoque(produto_id, quantidade)
-
-            messagebox.showinfo("Sucesso", "Saída registrada")
-
-            self.carregar_produtos()
-    
-    def saida_estoque(self):
-
-        selecionado = self.tabela.selection()
-
-        if not selecionado:
-            return
-
-        item = selecionado[0]
-        dados = self.tabela.item(item)["values"]
-        produto_id = dados[0]
-
-        quantidade = simpledialog.askinteger(
-            "Saída de Estoque",
-            "Quantidade a retirar:"
-        )
-
-        if quantidade:
-
-            saida_estoque(produto_id, quantidade)
-
-            messagebox.showinfo("Sucesso", "Saída registrada")
-
-            self.carregar_produtos()
-    
-        try:
-            saida_estoque(produto_id, quantidade)
-            messagebox.showinfo("Sucesso", "Saída registrada!")
-
-        except Exception as e:
-            messagebox.showerror("Erro", str(e))
+            try:
+                saida_estoque(produto_id, quantidade)
+                messagebox.showinfo("Sucesso", "Saída registrada!")
+                self.carregar_produtos()
+            except Exception as e:
+                messagebox.showerror("Erro", str(e))
             
     def exportar_excel(self):
 
@@ -707,21 +691,28 @@ class TelaProdutos(tk.Frame):
         # DADOS
         linha = 7
 
-        for item in self.tabela.get_children():
+        total_qtd_produtos = 0
 
-            valores = self.tabela.item(item)["values"]
+        produtos = self.obter_produtos_filtrados()
 
-            ws.cell(linha, 1, valores[1])  # Código
-            ws.cell(linha, 2, valores[2])  # Produto
-            ws.cell(linha, 3, valores[4])  # Estoque
-            ws.cell(linha, 4, valores[3])  # Preço (Un.)
+        for produto in produtos:
+            codigo = produto[1]
+            nome = produto[2]
+            preco = produto[3]
+            estoque = produto[4] or 0
 
+            ws.cell(linha, 1, codigo)
+            ws.cell(linha, 2, nome)
+            ws.cell(linha, 3, estoque)
+            ws.cell(linha, 4, moeda(preco))
+
+            total_qtd_produtos += int(estoque)
             linha += 1
 
-        total_produtos = len(self.tabela.get_children())
+        total_produtos = len(produtos)
 
-        ws.cell(linha + 2, 1, f"Total de produtos: {total_produtos}")
-
+        ws.cell(linha + 2, 1, f"Total de produtos cadastrados: {total_produtos}")
+        ws.cell(linha + 3, 1, f"Total de produtos em estoque: {total_qtd_produtos}")
         # LARGURA COLUNAS
         ws.column_dimensions["A"].width = 15
         ws.column_dimensions["B"].width = 40
@@ -779,15 +770,17 @@ class TelaProdutos(tk.Frame):
             ["Código", "Produto", "Estoque", "Preço (Un.)"]
         ]
 
-        for item in self.tabela.get_children():
-
-            valores = self.tabela.item(item)["values"]
+        for produto in self.obter_produtos_filtrados():
+            codigo = produto[1]
+            nome = produto[2]
+            preco = produto[3]
+            estoque = produto[4] or 0
 
             dados.append([
-                valores[1],
-                valores[2],
-                valores[4],
-                valores[3]
+                codigo,
+                nome,
+                estoque,
+                moeda(preco)
             ])
 
         tabela = Table(dados)
@@ -812,7 +805,7 @@ class TelaProdutos(tk.Frame):
 
         elementos.append(Spacer(1, 20))
 
-        total_produtos = len(self.tabela.get_children())
+        total_produtos = len(self.obter_produtos_filtrados())
 
         total = Paragraph(
             f"<b>Total de produtos:</b> {total_produtos}",
@@ -965,19 +958,3 @@ class TelaProdutos(tk.Frame):
 
         # CARREGA PRODUTOS
         self.carregar_produtos()
-        
-    def atualizar_produto(id, codigo, nome, preco_venda, estoque):
-
-        from src.database.database import conectar
-
-        conn = conectar()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            UPDATE produtos
-            SET codigo = ?, nome = ?, preco_venda = ?, estoque = ?
-            WHERE id = ?
-        """, (codigo, nome, preco_venda, estoque, id))
-
-        conn.commit()
-        conn.close()

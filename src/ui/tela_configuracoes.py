@@ -147,10 +147,12 @@ class TelaConfiguracoes(tk.Frame):
         self.var_alerta_estoque = BooleanVar()
         self.var_alerta_entrada = BooleanVar()
         self.var_alerta_saida = BooleanVar()
+        self.var_dicas_flutuantes = BooleanVar()
 
         self.var_alerta_estoque.set(obter_config("alerta_estoque", "1") == "1")
         self.var_alerta_entrada.set(obter_config("alerta_entrada", "1") == "1")
         self.var_alerta_saida.set(obter_config("alerta_saida", "1") == "1")
+        self.var_dicas_flutuantes.set(obter_config("dicas_flutuantes", "1") == "1")
 
         # Alerta 1
         self._create_toggle_item(
@@ -174,6 +176,13 @@ class TelaConfiguracoes(tk.Frame):
             "Destacar saídas/vendas no histórico",
             "Ressalta movimentações de saída em vermelho",
             self.var_alerta_saida
+        )
+
+        self._create_toggle_item(
+            alerts_frame,
+            "Dicas flutuantes animadas",
+            "Mostra balões de dicas no canto inferior direito a cada 5 minutos",
+            self.var_dicas_flutuantes
         )
 
         # ===== SEÇÃO DE ESTOQUE =====
@@ -316,6 +325,14 @@ class TelaConfiguracoes(tk.Frame):
         salvar_config("alerta_estoque", "1" if self.var_alerta_estoque.get() else "0")
         salvar_config("alerta_entrada", "1" if self.var_alerta_entrada.get() else "0")
         salvar_config("alerta_saida", "1" if self.var_alerta_saida.get() else "0")
+        salvar_config("dicas_flutuantes", "1" if self.var_dicas_flutuantes.get() else "0")
+
+        parent = self.master
+        while parent is not None:
+            if hasattr(parent, "_configurar_dicas_flutuantes"):
+                parent._configurar_dicas_flutuantes()
+                break
+            parent = getattr(parent, "master", None)
 
         messagebox.showinfo("Sucesso", "✓ Configurações salvas com sucesso!")
 

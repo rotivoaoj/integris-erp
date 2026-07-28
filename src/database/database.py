@@ -55,6 +55,18 @@ def criar_tabelas():
         data DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS itens_venda (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        venda_id INTEGER,
+        produto_id INTEGER,
+        nome TEXT,
+        quantidade INTEGER,
+        preco_unit REAL,
+        subtotal REAL
+    )
+    """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS configuracoes (

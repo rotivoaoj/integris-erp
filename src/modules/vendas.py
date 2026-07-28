@@ -33,6 +33,21 @@ def registrar_venda(itens):
         VALUES (?, datetime('now'))
     """, (total,))
 
+    venda_id = cursor.lastrowid
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS itens_venda (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            venda_id INTEGER,
+            produto_id INTEGER,
+            nome TEXT,
+            quantidade INTEGER,
+            preco_unit REAL,
+            subtotal REAL,
+            FOREIGN KEY (venda_id) REFERENCES vendas(id)
+        )
+    """)
+
     for item in itens:
         saida_estoque(
             item["id"],
@@ -40,6 +55,20 @@ def registrar_venda(itens):
             "Venda",
             conn  # 👈 AGORA USA MESMA CONEXÃO
         )
+
+        subtotal = item["preco"] * item["quantidade"]
+        cursor.execute("""
+            INSERT INTO itens_venda
+            (venda_id, produto_id, nome, quantidade, preco_unit, subtotal)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            venda_id,
+            item["id"],
+            item["nome"],
+            item["quantidade"],
+            item["preco"],
+            subtotal
+        ))
 
     conn.commit()
     conn.close()
@@ -79,6 +108,34 @@ def faturamento_do_mes():
     conn.close()
 
     return resultado if resultado else 0
+
+
+def listar_vendas_do_dia():
+    from src.database.database import conectar
+
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            v.id,
+            v.total,
+            v.data,
+            iv.produto_id,
+            iv.nome,
+            iv.quantidade,
+            iv.preco_unit,
+            iv.subtotal
+        FROM vendas v
+        JOIN itens_venda iv ON iv.venda_id = v.id
+        WHERE v.data >= datetime('now', 'start of day')
+        ORDER BY v.data ASC, v.id ASC
+    """)
+
+    dados = cursor.fetchall()
+    conn.close()
+
+    return dados
 
 def vendas_por_dia(mes_offset=0):
     from src.database.database import conectar
