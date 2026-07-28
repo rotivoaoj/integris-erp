@@ -1,5 +1,11 @@
-import tkinter as tk
 import os
+import random
+import tkinter as tk
+
+try:
+    import winsound
+except ImportError:  # pragma: no cover - ambiente não Windows
+    winsound = None
 
 from src.ui.tela_inicio import TelaInicio
 from src.ui.tela_produtos import TelaProdutos
@@ -11,7 +17,7 @@ from src.ui.tela_configuracoes import TelaConfiguracoes
 from src.utils.cores import *
 from src.utils.formatacao import moeda
 
-
+from src.modules.db_config import obter_config
 from src.settings.config import VERSAO, AMBIENTE
 
 
@@ -30,6 +36,12 @@ class TelaPrincipal(tk.Frame):
         self.root.geometry("1200x600")
     
         self.root.configure(bg=PRIMARY)
+
+        self._dica_timer_id = None
+        self._baloon_window = None
+        self._dicas_ativas = True
+        self._dica_intervalo_ms = 300000
+        self._alpha_atual = 0.0
 
         # =========================
         # MENU LATERAL
@@ -50,6 +62,159 @@ class TelaPrincipal(tk.Frame):
         # CRIAR MENU
         # =========================
         self.criar_menu()
+        self._configurar_dicas_flutuantes()
+
+    def _configurar_dicas_flutuantes(self):
+        habilitadas = obter_config("dicas_flutuantes", "1") == "1"
+        self._dicas_ativas = habilitadas
+
+        if self._dica_timer_id is not None:
+            self.after_cancel(self._dica_timer_id)
+            self._dica_timer_id = None
+
+        if self._baloon_window is not None:
+            try:
+                self._baloon_window.destroy()
+            except tk.TclError:
+                pass
+            self._baloon_window = None
+
+        if habilitadas:
+            self._dica_timer_id = self.after(self._dica_intervalo_ms, self._mostrar_dica_aleatoria)
+
+    def _mostrar_dica_aleatoria(self):
+        if not self._dicas_ativas:
+            return
+
+        if self._baloon_window is not None and self._baloon_window.winfo_exists():
+            return
+
+        dicas = [
+            "Organize produtos com estoque baixo para evitar faltas.",
+            "Revise o histórico de movimentações para acompanhar o fluxo da loja.",
+            "Use os relatórios para identificar vendas mais frequentes.",
+            "Mantenha as configurações atualizadas para personalizar o sistema.",
+            "Cadastre produtos com descrição clara para facilitar buscas futuras."
+        ]
+
+        mensagem = random.choice(dicas)
+        self._exibir_dica(mensagem)
+
+        self._dica_timer_id = self.after(self._dica_intervalo_ms, self._mostrar_dica_aleatoria)
+
+    def _exibir_dica(self, mensagem):
+        if not self._dicas_ativas:
+            return
+
+        self.root.update_idletasks()
+
+        self._fechar_dica_flutuante()
+        self._baloon_window = tk.Toplevel(self.root)
+        self._baloon_window.withdraw()
+        self._baloon_window.overrideredirect(True)
+        self._baloon_window.attributes("-topmost", True)
+        self._baloon_window.configure(bg="#0f172a")
+
+        frame = tk.Frame(self._baloon_window, bg="#111827", bd=0, highlightthickness=0)
+        frame.pack(fill="both", padx=10, pady=10)
+
+        content = tk.Frame(frame, bg="#111827")
+        content.pack(anchor="w")
+
+        tk.Label(
+            content,
+            text="💡",
+            font=("Segoe UI", 16),
+            bg="#111827",
+            fg="#fbbf24"
+        ).pack(side="left", padx=(0, 8))
+
+        text_frame = tk.Frame(content, bg="#111827")
+        text_frame.pack(side="left")
+
+        tk.Label(
+            text_frame,
+            text="Dica rápida",
+            font=("Segoe UI", 10, "bold"),
+            bg="#111827",
+            fg="#f8fafc"
+        ).pack(anchor="w")
+
+        tk.Label(
+            text_frame,
+            text=mensagem,
+            font=("Segoe UI", 10),
+            bg="#111827",
+            fg="#dbeafe",
+            justify="left",
+            wraplength=280
+        ).pack(anchor="w", pady=(2, 0))
+
+        self._baloon_window.update_idletasks()
+        largura = self._baloon_window.winfo_reqwidth()
+        altura = self._baloon_window.winfo_reqheight()
+
+        x = self.root.winfo_rootx() + max(20, self.root.winfo_width() - largura - 20)
+        y = self.root.winfo_rooty() + max(20, self.root.winfo_height() - altura - 20)
+        self._baloon_window.geometry(f"{largura}x{altura}+{x}+{y}")
+
+        try:
+            self._baloon_window.attributes("-alpha", 0.0)
+        except tk.TclError:
+            pass
+
+        self._baloon_window.deiconify()
+        self._reproduzir_som_notificacao()
+        self._animar_aparecer()
+        self.after(4500, self._animar_desaparecer)
+
+    def _animar_aparecer(self):
+        if self._baloon_window is None or not self._baloon_window.winfo_exists():
+            return
+
+        if self._alpha_atual < 0.9:
+            self._alpha_atual = min(0.9, self._alpha_atual + 0.08)
+            try:
+                self._baloon_window.attributes("-alpha", self._alpha_atual)
+            except tk.TclError:
+                pass
+            self.after(25, self._animar_aparecer)
+
+    def _animar_desaparecer(self):
+        if self._baloon_window is None or not self._baloon_window.winfo_exists():
+            self._alpha_atual = 0.0
+            return
+
+        if self._alpha_atual > 0.0:
+            self._alpha_atual = max(0.0, self._alpha_atual - 0.08)
+            try:
+                self._baloon_window.attributes("-alpha", self._alpha_atual)
+            except tk.TclError:
+                pass
+            self.after(25, self._animar_desaparecer)
+        else:
+            self._fechar_dica_flutuante()
+
+    def _fechar_dica_flutuante(self):
+        if self._baloon_window is not None:
+            try:
+                self._baloon_window.destroy()
+            except tk.TclError:
+                pass
+        self._baloon_window = None
+        self._alpha_atual = 0.0
+
+    def _reproduzir_som_notificacao(self):
+        if winsound is None:
+            return
+
+        try:
+            if hasattr(winsound, "MessageBeep"):
+                winsound.MessageBeep()
+            elif hasattr(winsound, "Beep"):
+                winsound.Beep(1000, 120)
+        except Exception:
+            pass
 
     # =========================
     # MENU
@@ -251,7 +416,7 @@ class TelaPrincipal(tk.Frame):
             "9. Em 'Configurações', personalize o tema e outras preferências do sistema.",
             "10. Para suporte, entre em contato com o SAC através do telefone ou email fornecido na seção de ajuda.",
             "11. Utilize a função de exportação de relatórios para salvar dados importantes em formatos como CSV ou PDF.",
-            "12. Use . para estabelecer valores decimais."
+            "12. Use '.' (ponto) para estabelecer valores decimais."
         ]
 
         for dica in dicas:
@@ -284,7 +449,7 @@ class TelaPrincipal(tk.Frame):
 
         contato = tk.Label(
             contato_section,
-            text="Telefone: (11) 4000-1234\nEmail: sac@integris.com.br",
+            text="Telefone: (35) 98449-8664\nEmail: sac@integris.com.br",
             font=("Arial", 11),
             fg=self.tema["text"],
             bg=self.tema["card"],
