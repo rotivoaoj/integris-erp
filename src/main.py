@@ -4,6 +4,8 @@ from src.database.init_db import criar_tabelas
 from src.ui.splash import SplashScreen
 from src.ui.tela_principal import TelaPrincipal
 from src.ui.styles import aplicar_estilo
+from PIL import Image, ImageTk
+
 
 def centralizar_janela(root, largura=1200, altura=600):
 
@@ -33,6 +35,10 @@ def main():
     criar_tabelas()
 
     root = tk.Tk()
+    
+    icone = ImageTk.PhotoImage(Image.open("assets/integris.png"))
+    root.iconphoto(True, icone)
+    
     tema = aplicar_estilo(root)
 
     root.withdraw()
