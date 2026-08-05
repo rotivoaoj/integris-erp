@@ -449,7 +449,7 @@ class TelaPrincipal(tk.Frame):
 
         contato = tk.Label(
             contato_section,
-            text="Telefone: (35) 98449-8664\nEmail: sac@integris.com.br",
+            text="Telefone: (35) 98449-8664\nEmail: sac.integris@gmail.com",
             font=("Arial", 11),
             fg=self.tema["text"],
             bg=self.tema["card"],
