@@ -2,9 +2,10 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import BooleanVar
 
+from src.modules.auth import alterar_chave
 from src.modules.db_config import salvar_config, obter_config
 from src.utils.formatacao import moeda
-from src.utils.cores import PRIMARY, SECONDARY, ACCENT, SUCCESS, WARNING, BG, WHITE
+from src.utils.cores import PRIMARY, SECONDARY, ACCENT, SUCCESS, WARNING, DANGER, BG, WHITE
 
 
 class ToggleButton(tk.Frame):
@@ -227,6 +228,94 @@ class TelaConfiguracoes(tk.Frame):
 
         self.entry_minimo.insert(0, obter_config("estoque_minimo", "5"))
 
+        # ===== SEÇÃO DE SEGURANÇA =====
+        self._create_section_header(scrollable_frame, "🔐 SEGURANÇA")
+
+        seguranca_frame = tk.Frame(scrollable_frame, bg=WHITE, relief=tk.FLAT, bd=0)
+        seguranca_frame.pack(fill="x", pady=(0, 20))
+
+        tk.Label(
+            seguranca_frame,
+            text="Alterar chave de acesso",
+            font=("Arial", 11, "bold"),
+            bg=WHITE,
+            fg=PRIMARY
+        ).pack(anchor="w", padx=15, pady=(15, 0))
+
+        tk.Label(
+            seguranca_frame,
+            text="Informe a chave atual e a nova chave para atualizar o acesso.",
+            font=("Arial", 9),
+            bg=WHITE,
+            fg=SECONDARY,
+            wraplength=760,
+            justify="left"
+        ).pack(anchor="w", padx=15, pady=(4, 12))
+
+        self.entry_chave_atual = tk.Entry(
+            seguranca_frame,
+            show="*",
+            font=("Arial", 11),
+            width=35,
+            bd=1,
+            relief=tk.SOLID,
+            bg=WHITE,
+            fg=PRIMARY
+        )
+        self.entry_chave_atual.pack(anchor="w", padx=15, pady=(0, 8))
+        self.entry_chave_atual.insert(0, "Chave atual")
+        self.entry_chave_atual.bind("<FocusIn>", lambda e: self._clear_placeholder(self.entry_chave_atual, "Chave atual"))
+
+        self.entry_chave_nova = tk.Entry(
+            seguranca_frame,
+            show="*",
+            font=("Arial", 11),
+            width=35,
+            bd=1,
+            relief=tk.SOLID,
+            bg=WHITE,
+            fg=PRIMARY
+        )
+        self.entry_chave_nova.pack(anchor="w", padx=15, pady=(0, 8))
+        self.entry_chave_nova.insert(0, "Nova chave")
+        self.entry_chave_nova.bind("<FocusIn>", lambda e: self._clear_placeholder(self.entry_chave_nova, "Nova chave"))
+
+        self.entry_confirma_chave = tk.Entry(
+            seguranca_frame,
+            show="*",
+            font=("Arial", 11),
+            width=35,
+            bd=1,
+            relief=tk.SOLID,
+            bg=WHITE,
+            fg=PRIMARY
+        )
+        self.entry_confirma_chave.pack(anchor="w", padx=15, pady=(0, 8))
+        self.entry_confirma_chave.insert(0, "Confirme a nova chave")
+        self.entry_confirma_chave.bind("<FocusIn>", lambda e: self._clear_placeholder(self.entry_confirma_chave, "Confirme a nova chave"))
+
+        tk.Button(
+            seguranca_frame,
+            text="Atualizar chave",
+            bg=ACCENT,
+            fg=WHITE,
+            font=("Arial", 10, "bold"),
+            bd=0,
+            padx=16,
+            pady=10,
+            cursor="hand2",
+            command=self._atualizar_chave
+        ).pack(anchor="w", padx=15, pady=(5, 15))
+
+        self.label_status_chave = tk.Label(
+            seguranca_frame,
+            text="",
+            font=("Segoe UI", 10),
+            fg=DANGER,
+            bg=WHITE
+        )
+        self.label_status_chave.pack(anchor="w", padx=15, pady=(0, 15))
+
         # ===== BOTÃO SALVAR (FIXED AT BOTTOM) =====
         button_frame = tk.Frame(self, bg=BG)
         button_frame.pack(fill="x", padx=20, pady=15)
@@ -313,6 +402,45 @@ class TelaConfiguracoes(tk.Frame):
             var.set(toggle.get())
 
         toggle.command = update_var
+
+    def _clear_placeholder(self, entry, placeholder):
+        if entry.get() == placeholder:
+            entry.delete(0, tk.END)
+
+    def _atualizar_chave(self):
+        chave_atual = self.entry_chave_atual.get().strip()
+        chave_nova = self.entry_chave_nova.get().strip()
+        confirma = self.entry_confirma_chave.get().strip()
+
+        if not chave_atual or chave_atual == "Chave atual":
+            self.label_status_chave.configure(text="Informe a chave atual.")
+            return
+
+        if not chave_nova or chave_nova == "Nova chave":
+            self.label_status_chave.configure(text="Informe a nova chave.")
+            return
+
+        if chave_nova != confirma:
+            self.label_status_chave.configure(text="A nova chave e a confirmação não coincidem.")
+            return
+
+        if alterar_chave(chave_atual, chave_nova):
+            self._set_status_chave(
+                text="Chave atualizada com sucesso! Use a nova chave no próximo login.",
+                fg=PRIMARY
+            )
+            self.entry_chave_atual.delete(0, tk.END)
+            self.entry_chave_nova.delete(0, tk.END)
+            self.entry_confirma_chave.delete(0, tk.END)
+        else:
+            self._set_status_chave(text="Chave atual incorreta.")
+
+    def _set_status_chave(self, text, fg=DANGER):
+        label = getattr(self, "label_status_chave", None)
+        if label is not None:
+            label.configure(text=text, fg=fg)
+        else:
+            messagebox.showinfo("Segurança", text)
 
     def salvar(self):
         minimo = self.entry_minimo.get()

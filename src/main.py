@@ -3,6 +3,7 @@ import tkinter as tk
 from src.database.init_db import criar_tabelas
 from src.ui.splash import SplashScreen
 from src.ui.tela_principal import TelaPrincipal
+from src.ui.tela_login import TelaLogin
 from src.ui.styles import aplicar_estilo
 from PIL import Image, ImageTk
 
@@ -27,6 +28,17 @@ def iniciar_sistema(root, splash, tema):
     root.overrideredirect(False)
     centralizar_janela(root, 1200, 600)
 
+    login_frame = TelaLogin(root, tema)
+    root.bind("<<LoginValido>>", lambda event: iniciar_principal(root, login_frame, tema))
+
+
+def iniciar_principal(root, login_frame, tema):
+    # proteja contra tentativa de destruir um frame já destruído
+    try:
+        if hasattr(login_frame, 'winfo_exists') and login_frame.winfo_exists():
+            login_frame.destroy()
+    except Exception:
+        pass
     TelaPrincipal(root, tema)
 
 

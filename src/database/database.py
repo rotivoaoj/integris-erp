@@ -75,5 +75,15 @@ def criar_tabelas():
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT UNIQUE,
+        chave_hash TEXT NOT NULL,
+        salt TEXT NOT NULL,
+        ativo INTEGER DEFAULT 1
+    )
+    """)
+
     conn.commit()
     conn.close()

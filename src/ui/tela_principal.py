@@ -1,6 +1,7 @@
 import os
 import random
 import tkinter as tk
+from tkinter import messagebox
 
 try:
     import winsound
@@ -236,6 +237,7 @@ class TelaPrincipal(tk.Frame):
         self.criar_botao_menu("📊 Relatórios", self.abrir_movimentacoes)
         self.criar_botao_menu("⚙️ Configurações", self.abrir_configuracoes)
         self.criar_botao_menu("❓ Ajuda", self.abrir_ajuda)
+        self.criar_botao_menu("🔓 Logout", self.logout)
         
         self.ativar_botao(self.botoes_menu[0], self.abrir_inicio)
         
@@ -461,3 +463,15 @@ class TelaPrincipal(tk.Frame):
         self.limpar_tela()
         tela = TelaConfiguracoes(self.frame_principal, self.tema)
         tela.pack(fill="both", expand=True)
+
+    def logout(self):
+        confirmar = messagebox.askyesno(
+            "Logout",
+            "Deseja realmente sair da seção?"
+        )
+        if not confirmar:
+            return
+
+        self.destroy()
+        from src.ui.tela_login import TelaLogin
+        TelaLogin(self.root, self.tema)

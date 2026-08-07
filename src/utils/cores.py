@@ -1,4 +1,4 @@
-PRIMARY = "#2c3e50"
+PRIMARY = "#031332"
 SECONDARY = "#34495e"
 ACCENT = "#1abc9c"
 SUCCESS = "#27ae60"
