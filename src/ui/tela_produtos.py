@@ -9,7 +9,6 @@ from openpyxl import styles
 from src.modules.produtos import listar_produtos, inserir_produto, atualizar_produto, excluir_produto, salvar_produto
 from src.modules.estoque import entrada_estoque, saida_estoque
 from src.modules.db_config import obter_config
-from src.ui import styles
 from src.utils.cores import *
 from src.ui.styles import *
 from src.utils.botoes import botao_moderno, botao_menor
@@ -120,8 +119,8 @@ class TelaProdutos(tk.Frame):
         # LISTA PRODUTOS
         # ==========================
 
-        frame_lista = tk.Frame(frame_conteudo, width=700)
-        frame_lista.pack(side="left", fill="both", padx=10, pady=10)
+        frame_lista = tk.Frame(frame_conteudo, width=750)
+        frame_lista.pack(side="left", fill="both", expand=True, padx=10, pady=10)
         frame_lista.pack_propagate(False)
 
         self.tabela = ttk.Treeview(
@@ -199,7 +198,7 @@ class TelaProdutos(tk.Frame):
 
         frame_detalhes = tk.Frame(
             frame_conteudo,
-            width=350,
+            width=250,
             bg=self.tema["card"]
         )
         frame_detalhes.pack(side="right", fill="y", padx=10, pady=10)

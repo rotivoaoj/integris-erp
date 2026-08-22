@@ -13,7 +13,6 @@ from src.ui.tela_produtos import TelaProdutos
 from src.ui.tela_movimentacoes import TelaMovimentacoes
 from src.ui.tela_vendas import TelaVendas
 from src.ui.tela_configuracoes import TelaConfiguracoes
-#from src.ui.version import VERSAO
 
 from src.utils.cores import *
 from src.utils.formatacao import moeda
